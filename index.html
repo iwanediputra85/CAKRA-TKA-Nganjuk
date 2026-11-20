@@ -666,7 +666,7 @@
             <!-- ================================================================= -->
             <!-- TAB 4: REKAP SEMUA LEMBAGA (KHUSUS PENGAWAS & ADMIN)              -->
             <!-- ================================================================= -->
-            <div id="panel-rekap" class="hidden space-y-5">
+            <div id="panel-rekap" class="hidden space-y-5" data-supervisor-admin-only="true">
                 <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-red-100">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                         <div>
@@ -1304,6 +1304,13 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
             );
         }
 
+        function isSupervisorOrAdminAuthenticated() {
+            return Boolean(
+                state.currentUser &&
+                (state.currentUser.role === "pengawas" || isAdminAuthenticated())
+            );
+        }
+
         async function pushToGoogleSheets(action, payloadObj) {
             const url = state.sheetsConfig.appsScriptUrl;
             if (!url) return false;
@@ -1603,8 +1610,12 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
             if (user.role === "lembaga") {
                 tabRekap.classList.add("hidden");
                 mobRekap.classList.add("hidden");
+                const panelRekap = document.getElementById("panel-rekap");
+                if (panelRekap) panelRekap.classList.add("hidden");
                 tabSheets.classList.add("hidden");
                 mobSheets.classList.add("hidden");
+                const panelSheets = document.getElementById("panel-sheets");
+                if (panelSheets) panelSheets.classList.add("hidden");
                 supBar.classList.add("hidden");
 
                 // Pastikan record lembaga tersedia
@@ -1651,6 +1662,10 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
         }
 
         function switchMainTab(tabName) {
+            if (tabName === "rekap" && !isSupervisorOrAdminAuthenticated()) {
+                showToast("Akses ditolak: Tab Rekap Lembaga hanya untuk Pengawas dan Administrator.", "error");
+                return;
+            }
             if (tabName === "sheets" && !isAdminAuthenticated()) {
                 showToast("Akses ditolak: Tab Database Sheets hanya untuk Administrator.", "error");
                 return;
@@ -1663,7 +1678,9 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
                 const mobBtn = document.getElementById(`mobTab-${p}`);
 
                 if (panelEl) {
-                    if (p === "sheets" && !isAdminAuthenticated()) {
+                    if (p === "rekap" && !isSupervisorOrAdminAuthenticated()) {
+                        panelEl.classList.add("hidden");
+                    } else if (p === "sheets" && !isAdminAuthenticated()) {
                         panelEl.classList.add("hidden");
                     } else if (p === tabName) {
                         panelEl.classList.remove("hidden");
@@ -1693,13 +1710,14 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
 
             if (tabName === "ai") {
                 updateElementChart();
-            } else if (tabName === "rekap") {
+            } else if (tabName === "rekap" && isSupervisorOrAdminAuthenticated()) {
                 renderRekapTable();
             }
         }
 
         // 10. PENGAWAS & ADMIN: PILIH & PANTAU LEMBAGA
         function getAllSchoolsList() {
+            if (!isSupervisorOrAdminAuthenticated()) return [];
             const schoolMap = {};
             state.accounts.filter(a => a.role === "lembaga").forEach(acc => {
                 schoolMap[acc.username] = {
@@ -1755,6 +1773,10 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
         }
 
         function monitorSpecificSchool(npsn) {
+            if (!isSupervisorOrAdminAuthenticated()) {
+                showToast("Akses ditolak: Fitur pemantauan hanya untuk Pengawas dan Administrator.", "error");
+                return;
+            }
             state.activeNpsn = npsn;
             const selectEl = document.getElementById("selectSchoolToMonitor");
             if (selectEl) selectEl.value = npsn;
@@ -2264,6 +2286,10 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
         function renderRekapTable() {
             const tbody = document.getElementById("rekapSchoolsTableBody");
             if (!tbody) return;
+            if (!isSupervisorOrAdminAuthenticated()) {
+                tbody.innerHTML = "";
+                return;
+            }
 
             const schools = getAllSchoolsList();
             document.getElementById("totalRegisteredSchoolsCount").textContent = schools.length;

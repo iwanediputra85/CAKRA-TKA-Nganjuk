@@ -733,6 +733,11 @@
                     <!-- Form URL Google Sheets & Apps Script Web App -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 py-6 border-b border-slate-100">
                         <div class="space-y-4">
+                            <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-950 leading-relaxed">
+                                <strong>Penting untuk Deploy Netlify (Multi-Browser):</strong><br>
+                                Agar semua Lembaga & Pengawas di HP/browser berbeda langsung terhubung tanpa setting ulang, tempelkan URL Web App pada variabel <code class="bg-amber-200/70 px-1.5 py-0.5 rounded font-mono font-bold">DEFAULT_APPS_SCRIPT_URL</code> di dalam file <code class="font-mono font-bold">index.html</code> sebelum di-upload ke Netlify, atau klik tombol <strong>Salin Kode Siap Netlify</strong> di bawah.
+                            </div>
+
                             <div>
                                 <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">
                                     1. Link URL File Google Sheets (Untuk Dilihat Admin)
@@ -758,6 +763,10 @@
                                     <i data-lucide="wifi" class="w-4 h-4 text-green-600"></i>
                                     <span>Uji Koneksi & Sinkronkan</span>
                                 </button>
+                                <button onclick="exportReadyHtmlForNetlify()" class="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold shadow-sm transition flex items-center gap-2 cursor-pointer">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                    <span>Unduh index.html Terkoneksi (Siap Netlify)</span>
+                                </button>
                             </div>
                         </div>
 
@@ -765,16 +774,15 @@
                         <div class="bg-red-50/60 border border-red-100 rounded-2xl p-5 space-y-3">
                             <h4 class="text-sm font-extrabold text-sdred-950 flex items-center gap-2">
                                 <i data-lucide="book-marked" class="w-4 h-4 text-sdred-700"></i>
-                                <span>Langkah-Langkah Menghubungkan ke Google Sheets</span>
+                                <span>Langkah-Langkah Menghubungkan ke Google Sheets & Netlify</span>
                             </h4>
                             <ol class="list-decimal list-inside space-y-2 text-xs text-slate-700 leading-relaxed">
                                 <li>Buka <a href="https://sheets.new" target="_blank" class="text-sdred-700 font-bold underline">sheets.new</a> untuk membuat Google Sheets baru dan beri nama <strong>Database CAKRA-TKA Nganjuk</strong>.</li>
-                                <li>Salin link URL Google Sheets dari browser Anda, lalu tempelkan pada kolom <strong>1. Link URL File Google Sheets</strong> di samping.</li>
                                 <li>Di dalam Google Sheets, klik menu <strong>Ekstensi (Extensions) &rarr; Apps Script</strong>.</li>
-                                <li>Hapus kode bawaan, lalu <strong>Salin & Tempel kode Apps Script</strong> di bawah ini ke editor Apps Script, kemudian klik ikon <strong>Simpan (Disket)</strong>.</li>
-                                <li>Klik tombol biru <strong>Terapkan (Deploy) &rarr; Deployment baru (New deployment)</strong>.</li>
-                                <li>Pilih jenis <strong>Aplikasi Web (Web app)</strong>, atur <em>Jalankan sebagai (Execute as)</em>: <strong>Saya (Me)</strong>, dan <em>Yang memiliki akses (Who has access)</em>: <strong>Siapa saja (Anyone)</strong>.</li>
-                                <li>Klik <strong>Terapkan</strong>, izinkan akses, lalu salin <strong>URL Aplikasi Web (.../exec)</strong> dan tempelkan ke kolom <strong>2. URL Web App Google Apps Script</strong> di samping.</li>
+                                <li>Hapus kode bawaan, lalu <strong>Salin & Tempel kode Apps Script terbaru</strong> di bawah ini ke editor Apps Script, lalu klik <strong>Simpan (Disket)</strong>.</li>
+                                <li>Klik <strong>Terapkan (Deploy) &rarr; Deployment baru</strong> &rarr; Pilih <strong>Aplikasi Web</strong> &rarr; <em>Jalankan sebagai</em>: <strong>Saya (Me)</strong> &rarr; <em>Yang memiliki akses</em>: <strong>Siapa saja (Anyone)</strong>.</li>
+                                <li>Salin <strong>URL Aplikasi Web (.../exec)</strong> dan tempelkan pada kolom <strong>2. URL Web App Google Apps Script</strong> di samping, lalu klik <strong>Simpan Pengaturan Sheets</strong>.</li>
+                                <li>Klik tombol hijau <strong>"Unduh index.html Terkoneksi (Siap Netlify)"</strong>, lalu unggah file <code class="font-mono font-bold">index.html</code> hasil unduhan tersebut ke <strong>Netlify</strong> agar seluruh browser/HP langsung terhubung!</li>
                             </ol>
                         </div>
                     </div>
@@ -782,7 +790,7 @@
                     <!-- Kode Google Apps Script Siap Salin -->
                     <div class="pt-5">
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Kode Google Apps Script (Copy & Paste ke Editor Apps Script)</span>
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Kode Google Apps Script (Versi Anti-CORS & Multi-Browser)</span>
                             <button onclick="copyAppsScriptCode()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
                                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                 <span>Salin Kode Script</span>
@@ -792,6 +800,15 @@
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheetAcc = getOrCreateSheet(ss, "Accounts", ["username", "password", "name", "role", "kecamatan", "createdAt"]);
   var sheetRec = getOrCreateSheet(ss, "Records", ["npsn", "schoolName", "kecamatan", "scoresBind", "scoresMtk", "aiAnalysis", "checklist", "notes", "updatedAt"]);
+  
+  // Mendukung penyimpanan via parameter GET agar 100% bebas blokir CORS di Netlify & semua browser
+  if (e && e.parameter && e.parameter.action) {
+    var action = e.parameter.action;
+    var payload = JSON.parse(e.parameter.payload || "{}");
+    processWriteAction(sheetAcc, sheetRec, action, payload);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", action: action }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
   
   var accounts = readSheetAsObjects(sheetAcc);
   var records = readSheetAsObjects(sheetRec);
@@ -805,29 +822,41 @@
 
 function doPost(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetAcc = getOrCreateSheet(ss, "Accounts", ["username", "password", "name", "role", "kecamatan", "createdAt"]);
+  var sheetRec = getOrCreateSheet(ss, "Records", ["npsn", "schoolName", "kecamatan", "scoresBind", "scoresMtk", "aiAnalysis", "checklist", "notes", "updatedAt"]);
   var body = JSON.parse(e.postData.contents);
   
-  if (body.action === "saveAccount") {
-    var sheetAcc = getOrCreateSheet(ss, "Accounts", ["username", "password", "name", "role", "kecamatan", "createdAt"]);
-    upsertRow(sheetAcc, "username", body.data);
-  } else if (body.action === "saveRecord") {
-    var sheetRec = getOrCreateSheet(ss, "Records", ["npsn", "schoolName", "kecamatan", "scoresBind", "scoresMtk", "aiAnalysis", "checklist", "notes", "updatedAt"]);
-    var rowObj = {
-      npsn: body.data.npsn,
-      schoolName: body.data.schoolName || "",
-      kecamatan: body.data.kecamatan || "",
-      scoresBind: JSON.stringify(body.data.scoresBind || {}),
-      scoresMtk: JSON.stringify(body.data.scoresMtk || {}),
-      aiAnalysis: JSON.stringify(body.data.aiAnalysis || null),
-      checklist: JSON.stringify(body.data.checklist || []),
-      notes: body.data.notes || "",
-      updatedAt: body.data.updatedAt || new Date().toISOString()
-    };
-    upsertRow(sheetRec, "npsn", rowObj);
-  }
+  processWriteAction(sheetAcc, sheetRec, body.action, body.data);
   
   return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function processWriteAction(sheetAcc, sheetRec, action, data) {
+  if (action === "saveAccount") {
+    var accObj = {
+      username: "'" + String(data.username),
+      password: "'" + String(data.password),
+      name: String(data.name || ""),
+      role: String(data.role || "lembaga"),
+      kecamatan: String(data.kecamatan || ""),
+      createdAt: String(data.createdAt || new Date().toISOString())
+    };
+    upsertRow(sheetAcc, "username", accObj, String(data.username));
+  } else if (action === "saveRecord") {
+    var rowObj = {
+      npsn: "'" + String(data.npsn),
+      schoolName: String(data.schoolName || ""),
+      kecamatan: String(data.kecamatan || ""),
+      scoresBind: JSON.stringify(data.scoresBind || {}),
+      scoresMtk: JSON.stringify(data.scoresMtk || {}),
+      aiAnalysis: JSON.stringify(data.aiAnalysis || null),
+      checklist: JSON.stringify(data.checklist || []),
+      notes: String(data.notes || ""),
+      updatedAt: String(data.updatedAt || new Date().toISOString())
+    };
+    upsertRow(sheetRec, "npsn", rowObj, String(data.npsn));
+  }
 }
 
 function getOrCreateSheet(ss, name, headers) {
@@ -842,14 +871,16 @@ function getOrCreateSheet(ss, name, headers) {
 
 function readSheetAsObjects(sheet) {
   var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return [];
+  if (data.length &lt;= 1) return [];
   var headers = data[0];
   var result = [];
-  for (var i = 1; i < data.length; i++) {
+  for (var i = 1; i &lt; data.length; i++) {
     var obj = {};
-    for (var j = 0; j < headers.length; j++) {
+    for (var j = 0; j &lt; headers.length; j++) {
       var val = data[i][j];
-      if (typeof val === "string" && (val.startsWith("{") || val.startsWith("[") || val === "null")) {
+      if (headers[j] === "username" || headers[j] === "password" || headers[j] === "npsn") {
+        val = String(val).replace(/^'/, "");
+      } else if (typeof val === "string" && (val.startsWith("{") || val.startsWith("[") || val === "null")) {
         try { val = JSON.parse(val); } catch(err) {}
       }
       obj[headers[j]] = val;
@@ -859,19 +890,20 @@ function readSheetAsObjects(sheet) {
   return result;
 }
 
-function upsertRow(sheet, keyCol, obj) {
+function upsertRow(sheet, keyCol, obj, rawKey) {
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   var keyIdx = headers.indexOf(keyCol);
   var rowIndex = -1;
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][keyIdx]) === String(obj[keyCol])) {
+  for (var i = 1; i &lt; data.length; i++) {
+    var cellVal = String(data[i][keyIdx]).replace(/^'/, "");
+    if (cellVal === String(rawKey)) {
       rowIndex = i + 1;
       break;
     }
   }
   var rowValues = headers.map(function(h) { return obj[h] !== undefined ? obj[h] : ""; });
-  if (rowIndex > 0) {
+  if (rowIndex &gt; 0) {
     sheet.getRange(rowIndex, 1, 1, headers.length).setValues([rowValues]);
   } else {
     sheet.appendRow(rowValues);
@@ -931,6 +963,10 @@ function upsertRow(sheet, keyCol, obj) {
     <!-- ==================== LOGIKA APLIKASI & DATABASE GOOGLE SHEETS ==================== -->
     <script>
         // 1. KONFIGURASI DEFAULT & KREDENSIAL ADMIN
+        // Tempelkan URL Web App Google Apps Script Anda di bawah ini agar otomatis aktif di semua browser/perangkat saat di-deploy ke Netlify:
+        const DEFAULT_SHEET_VIEW_URL = "https://docs.google.com/spreadsheets";
+        const DEFAULT_APPS_SCRIPT_URL = "";
+
         const ADMIN_ACCOUNT = {
             username: "197203041999111001",
             password: "TKA_SD_Meningkat",
@@ -1070,27 +1106,35 @@ function upsertRow(sheet, keyCol, obj) {
             elementChartInstance: null,
             syncIntervalId: null,
             sheetsConfig: {
-                sheetViewUrl: "https://docs.google.com/spreadsheets",
-                appsScriptUrl: ""
+                sheetViewUrl: DEFAULT_SHEET_VIEW_URL,
+                appsScriptUrl: DEFAULT_APPS_SCRIPT_URL
             }
         };
 
         // 5. INISIALISASI APLIKASI & DATA DEMO BAWAAN
-        function initApp() {
+        async function initApp() {
             populateKecamatanDropdowns();
             loadLocalCacheAndSeedDemo();
             lucide.createIcons();
 
-            // Jika Admin sudah menautkan URL Google Apps Script, tarik data terbaru dari Google Sheets
+            // Tarik data terbaru dari Google Sheets saat halaman dibuka (di semua browser)
             if (state.sheetsConfig.appsScriptUrl) {
-                syncFromGoogleSheets(false);
+                await syncFromGoogleSheets(false);
+            } else {
+                updateDbBadge(false, "Menunggu URL Sheets");
             }
         }
 
         function loadLocalCacheAndSeedDemo() {
             try {
                 const savedCfg = localStorage.getItem(STORAGE_KEY_SHEETS_CFG);
-                if (savedCfg) state.sheetsConfig = JSON.parse(savedCfg);
+                if (savedCfg) {
+                    const parsedCfg = JSON.parse(savedCfg);
+                    state.sheetsConfig = {
+                        sheetViewUrl: parsedCfg.sheetViewUrl || DEFAULT_SHEET_VIEW_URL,
+                        appsScriptUrl: DEFAULT_APPS_SCRIPT_URL || parsedCfg.appsScriptUrl || ""
+                    };
+                }
 
                 const savedAcc = localStorage.getItem(STORAGE_KEY_ACCOUNTS);
                 const savedRec = localStorage.getItem(STORAGE_KEY_RECORDS);
@@ -1141,16 +1185,19 @@ function upsertRow(sheet, keyCol, obj) {
                     scoresBind: sampleBind,
                     scoresMtk: sampleMtk,
                     aiAnalysis: {
-                        diagnosis: "Berdasarkan pemetaan 60 indikator TKA pada SD Negeri 1 Nganjuk (Demo), capaian terendah berada pada indikator operasi hitung campuran pecahan dengan bilangan asli (MTK #6: 44.0), konstruksi bangun ruang & visualisasi spasial (MTK #15: 44.0), serta menyimpulkan inferensi isi teks (B.Indo #10: 46.5). Peserta didik memerlukan penguatan visualisasi konkret dan pembiasaan literasi berbasis penalaran tingkat tinggi.",
+                        diagnosis: "Berdasarkan pemetaan 60 indikator TKA pada SD Negeri 1 Nganjuk (Demo), capaian terendah berada pada kompetensi penalaran inferensial Bahasa Indonesia dan operasi pecahan/visualisasi bangun ruang Matematika. Peserta didik memerlukan pembiasaan membaca pemahaman mendalam serta penggunaan media konkret.",
+                        lowestSnapshot: [
+                            { subject: "Matematika", elemen: "Bilangan", qNum: 6, nama: "Menentukan hasil operasi hitung campuran yang melibatkan pecahan dan bilangan asli. (6)", score: 44.0 },
+                            { subject: "Bahasa Indonesia", elemen: "Pemahaman Inferensial", qNum: 2, nama: "Menentukan makna ungkapan dalam teks. (2)", score: 46.5 }
+                        ],
                         generatedAt: new Date().toISOString()
                     },
                     checklist: [
-                        { id: "d1", kode: "AKSI-1", fokusMapel: "Matematika", judul: "Penggunaan Alat Peraga Konkret Pecahan & Bangun Ruang", deskripsi: "Guru kelas IV–VI menggunakan blok pecahan dan model jaring-jaring bangun ruang sebelum masuk ke soal abstrak.", done: true, completedAt: new Date().toISOString() },
-                        { id: "d2", kode: "AKSI-2", fokusMapel: "Bahasa Indonesia", judul: "Klinik Literasi Inferensial 15 Menit Sebelum KBM", deskripsi: "Membiasakan siswa menyimpulkan amanat, makna ungkapan, dan isi tersirat dari bacaan cerita rakyat Nganjuk.", done: true, completedAt: new Date().toISOString() },
-                        { id: "d3", kode: "AKSI-3", fokusMapel: "Lintas Mapel", judul: "Bedah Soal HOTS pada KKG Mini Satuan Pendidikan", deskripsi: "Menyusun bank soal latihan berbasis diagram batang, tabel, dan pemodelan kalimat matematika.", done: false, completedAt: null },
-                        { id: "d4", kode: "AKSI-4", fokusMapel: "Supervisi", judul: "Evaluasi Try-Out Berkala Bersama Pengawas SD", deskripsi: "Melakukan simulasi TKA bulanan dan meninjau grafik peningkatan indikator terendah.", done: false, completedAt: null }
+                        { id: "demo_1", kode: "AKSI-1", fokusMapel: "Matematika", judul: "Penguatan Konsep Pecahan dengan Benda Konkret", deskripsi: "Menggunakan alat peraga pecahan dan garis bilangan pada pembelajaran kelas IV-VI.", done: true, completedAt: new Date().toISOString() },
+                        { id: "demo_2", kode: "AKSI-2", fokusMapel: "Bahasa Indonesia", judul: "Program Literasi Inferensial 15 Menit Pagi", deskripsi: "Membiasakan siswa menyimpulkan ide pokok dan makna ungkapan dari teks bacaan.", done: true, completedAt: new Date().toISOString() },
+                        { id: "demo_3", kode: "AKSI-3", fokusMapel: "Lintas Mapel", judul: "Bedah Indikator Terendah di KKG Mini Sekolah", deskripsi: "Menyusun bank soal HOTS berbasis konteks kehidupan sehari-hari.", done: false, completedAt: null }
                     ],
-                    notes: "Sekolah sudah mulai melaksanakan klinik literasi pagi dan penggunaan alat peraga matematika dengan baik. Lanjutkan ke tahap bedah soal KKG.",
+                    notes: "Progres pelaksanaan rencana aksi berjalan baik, lanjutkan pendampingan kelas VI.",
                     updatedAt: new Date().toISOString()
                 };
             }
@@ -1160,33 +1207,49 @@ function upsertRow(sheet, keyCol, obj) {
 
         function persistToLocalCache() {
             try {
+                localStorage.setItem(STORAGE_KEY_SHEETS_CFG, JSON.stringify(state.sheetsConfig));
                 localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(state.allAccounts));
                 localStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(state.allSchoolRecords));
-                localStorage.setItem(STORAGE_KEY_SHEETS_CFG, JSON.stringify(state.sheetsConfig));
-            } catch (e) {}
+            } catch (e) {
+                console.warn("Gagal menyimpan cache lokal:", e);
+            }
         }
 
-        // 6. SINKRONISASI DENGAN GOOGLE SHEETS (VIA APPS SCRIPT WEB APP)
+        // 6. SINKRONISASI DENGAN GOOGLE SHEETS (BEBAS BLOKIR CORS MULTI-BROWSER)
         async function syncFromGoogleSheets(showNotification = false) {
             const url = state.sheetsConfig.appsScriptUrl;
             if (!url) {
                 if (showNotification) showToast("URL Web App Google Sheets belum diatur oleh Admin.", "warning");
-                return;
+                return false;
             }
 
             updateDbBadge(true, "Menyinkronkan Sheets...");
             try {
-                const res = await fetch(url);
+                const fetchUrl = `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+                const res = await fetch(fetchUrl, { method: "GET", redirect: "follow" });
                 const data = await res.json();
                 if (data && data.status === "success") {
                     if (Array.isArray(data.accounts)) {
                         data.accounts.forEach(acc => {
-                            if (acc.username) state.allAccounts[String(acc.username)] = acc;
+                            if (acc.username) {
+                                const cleanUser = String(acc.username).trim();
+                                state.allAccounts[cleanUser] = {
+                                    ...acc,
+                                    username: cleanUser,
+                                    password: String(acc.password || "")
+                                };
+                            }
                         });
                     }
                     if (Array.isArray(data.records)) {
                         data.records.forEach(rec => {
-                            if (rec.npsn) state.allSchoolRecords[String(rec.npsn)] = rec;
+                            if (rec.npsn) {
+                                const cleanNpsn = String(rec.npsn).trim();
+                                state.allSchoolRecords[cleanNpsn] = {
+                                    ...rec,
+                                    npsn: cleanNpsn
+                                };
+                            }
                         });
                     }
                     persistToLocalCache();
@@ -1200,13 +1263,15 @@ function upsertRow(sheet, keyCol, obj) {
                         }
                     }
                     updateDbBadge(true, "Terhubung Google Sheets");
-                    if (showNotification) showToast("Data berhasil disinkronkan dari Google Sheets!", "success");
+                    if (showNotification) showToast("Terhubung! Data berhasil disinkronkan dari Google Sheets.", "success");
+                    return true;
                 }
             } catch (err) {
                 console.warn("Gagal menarik data dari Google Sheets:", err);
-                updateDbBadge(false, "Mode Cache Lokal");
-                if (showNotification) showToast("Gagal terhubung ke URL Google Sheets. Periksa pengaturan Admin.", "error");
+                updateDbBadge(false, "Gagal Koneksi Sheets");
+                if (showNotification) showToast("Gagal terhubung ke Google Sheets. Pastikan akses Web App diatur ke 'Anyone' (Siapa saja).", "error");
             }
+            return false;
         }
 
         async function pushToGoogleSheets(actionType, payloadData) {
@@ -1214,13 +1279,23 @@ function upsertRow(sheet, keyCol, obj) {
             if (!url) return false;
 
             try {
-                await fetch(url, {
-                    method: "POST",
-                    mode: "no-cors", // Menghindari kendala CORS redirect Google Apps Script
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: actionType, data: payloadData })
-                });
-                return true;
+                const encodedPayload = encodeURIComponent(JSON.stringify(payloadData));
+                const getWriteUrl = `${url}${url.includes('?') ? '&' : '?'}action=${encodeURIComponent(actionType)}&payload=${encodedPayload}`;
+
+                // Gunakan GET untuk payload ringkas agar 100% tembus di semua browser tanpa preflight CORS
+                if (getWriteUrl.length < 7500) {
+                    const res = await fetch(getWriteUrl, { method: "GET", redirect: "follow" });
+                    const json = await res.json();
+                    return json && json.status === "success";
+                } else {
+                    await fetch(url, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({ action: actionType, data: payloadData })
+                    });
+                    return true;
+                }
             } catch (err) {
                 console.error("Gagal mengirim ke Google Sheets:", err);
                 return false;
@@ -1346,15 +1421,23 @@ function upsertRow(sheet, keyCol, obj) {
                 return;
             }
 
-            if (username === ADMIN_ACCOUNT.username || state.allAccounts[username]) {
-                showToast(`Username/NPSN "${username}" sudah terdaftar. Silakan langsung masuk.`, "error");
-                return;
-            }
-
             const btn = document.getElementById('btnSubmitRegister');
             btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span>Menyimpan ke Sheets...</span>`;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span>Mengecek & Menyimpan...</span>`;
             lucide.createIcons();
+
+            // Tarik data terbaru dari Sheets dulu agar tidak terjadi duplikasi akun antar-browser
+            if (state.sheetsConfig.appsScriptUrl) {
+                await syncFromGoogleSheets(false);
+            }
+
+            if (username === ADMIN_ACCOUNT.username || state.allAccounts[username]) {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="user-plus" class="w-4 h-4"></i> <span>Daftarkan Akun Sekarang</span>`;
+                lucide.createIcons();
+                showToast(`Username/NPSN "${username}" sudah terdaftar di database. Silakan langsung masuk.`, "error");
+                return;
+            }
 
             const newAccount = {
                 username: username,
@@ -1366,7 +1449,7 @@ function upsertRow(sheet, keyCol, obj) {
             };
 
             state.allAccounts[username] = newAccount;
-            await pushToGoogleSheets("saveAccount", newAccount);
+            const accSaved = await pushToGoogleSheets("saveAccount", newAccount);
 
             if (role === 'lembaga') {
                 const newRecord = {
@@ -1389,7 +1472,11 @@ function upsertRow(sheet, keyCol, obj) {
             btn.innerHTML = `<i data-lucide="user-plus" class="w-4 h-4"></i> <span>Daftarkan Akun Sekarang</span>`;
             lucide.createIcons();
 
-            showToast(`Registrasi ${role === 'lembaga' ? 'Lembaga' : 'Pengawas'} berhasil! Silakan masuk.`, "success");
+            if (state.sheetsConfig.appsScriptUrl && !accSaved) {
+                showToast("Akun tersimpan lokal, namun gagal terkirim ke Google Sheets. Periksa URL Web App.", "warning");
+            } else {
+                showToast(`Registrasi ${role === 'lembaga' ? 'Lembaga' : 'Pengawas'} berhasil tersimpan! Silakan masuk.`, "success");
+            }
             document.getElementById('registerForm').reset();
             switchAuthTab('login');
             document.getElementById('loginUsername').value = username;
@@ -1413,18 +1500,31 @@ function upsertRow(sheet, keyCol, obj) {
                 }
             }
 
-            // 2. Sinkronkan dulu jika URL Sheets tersedia agar akun yang baru didaftarkan di perangkat lain terbaca
-            if (!state.allAccounts[username] && state.sheetsConfig.appsScriptUrl) {
+            const btn = document.getElementById('btnSubmitLogin');
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span>Memeriksa Akun...</span>`;
+            lucide.createIcons();
+
+            // 2. Selalu sinkronkan dengan Google Sheets saat login agar akun dari browser/HP lain terbaca
+            if (state.sheetsConfig.appsScriptUrl) {
                 await syncFromGoogleSheets(false);
             }
 
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i> <span>Masuk ke CAKRA-TKA</span>`;
+            lucide.createIcons();
+
             const accData = state.allAccounts[username];
             if (!accData) {
-                showToast("Username / NPSN tidak ditemukan. Silakan registrasi terlebih dahulu.", "error");
+                if (!state.sheetsConfig.appsScriptUrl) {
+                    showToast("Aplikasi belum ditautkan ke Google Sheets oleh Admin, dan akun tidak ditemukan di browser ini.", "error");
+                } else {
+                    showToast("Username / NPSN tidak ditemukan. Silakan registrasi terlebih dahulu.", "error");
+                }
                 return;
             }
 
-            if (accData.password === password) {
+            if (String(accData.password) === String(password)) {
                 enterDashboard(accData, false);
                 showToast(`Berhasil masuk sebagai ${accData.role.toUpperCase()}`, "success");
             } else {
@@ -1578,24 +1678,56 @@ function upsertRow(sheet, keyCol, obj) {
             showToast("Kode Google Apps Script berhasil disalin ke clipboard!", "success");
         };
 
-        // 11. PEMILIHAN LEMBAGA UNTUK PENGAWAS & ADMIN
-        function refreshSupervisorSchoolList() {
-            const filterKec = document.getElementById('filterKecamatanSelect').value;
-            const schoolSelect = document.getElementById('selectSchoolToMonitor');
-            const prevSelected = state.activeSchoolNpsn;
+        // FITUR EKSPOR FILE INDEX.HTML DENGAN URL GOOGLE SHEETS TERTANAM PERMANEN (SIAP NETLIFY)
+        window.exportReadyHtmlForNetlify = function() {
+            if (state.currentUser?.role !== 'admin') return;
+            const viewUrl = document.getElementById('adminSheetViewUrlInput').value.trim() || "https://docs.google.com/spreadsheets";
+            const scriptUrl = document.getElementById('adminAppsScriptUrlInput').value.trim();
 
+            if (!scriptUrl) {
+                showToast("Isi terlebih dahulu '2. URL Web App Google Apps Script' sebelum mengunduh file untuk Netlify.", "warning");
+                return;
+            }
+
+            saveGoogleSheetsConfig();
+
+            let fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            fullHtml = fullHtml.replace(
+                /const DEFAULT_SHEET_VIEW_URL = ".*?";/,
+                `const DEFAULT_SHEET_VIEW_URL = "${viewUrl}";`
+            );
+            fullHtml = fullHtml.replace(
+                /const DEFAULT_APPS_SCRIPT_URL = ".*?";/,
+                `const DEFAULT_APPS_SCRIPT_URL = "${scriptUrl}";`
+            );
+
+            const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+            const downloadUrl = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = downloadUrl;
+            a.download = "index.html";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(downloadUrl);
+
+            showToast("File index.html siap Netlify berhasil diunduh! Upload file ini ke Netlify agar semua browser langsung terhubung.", "success");
+        };
+
+        // 11. PEMANTAUAN SEKOLAH OLEH PENGAWAS & ADMIN
+        function refreshSupervisorSchoolList() {
+            const kecFilter = document.getElementById('filterKecamatanSelect').value;
+            const selectEl = document.getElementById('selectSchoolToMonitor');
+            if (!selectEl) return;
+
+            const prevVal = selectEl.value || state.activeSchoolNpsn;
             const schools = Object.values(state.allAccounts)
-                .filter(acc => acc.role === 'lembaga')
-                .filter(acc => filterKec === 'ALL' || acc.kecamatan === filterKec)
+                .filter(acc => acc.role === 'lembaga' && (kecFilter === 'ALL' || acc.kecamatan === kecFilter))
                 .sort((a, b) => a.name.localeCompare(b.name));
 
-            schoolSelect.innerHTML = '';
-
+            selectEl.innerHTML = '';
             if (schools.length === 0) {
-                const opt = document.createElement('option');
-                opt.value = "";
-                opt.textContent = "-- Belum ada Lembaga SD di kecamatan ini --";
-                schoolSelect.appendChild(opt);
+                selectEl.innerHTML = `<option value="">-- Tidak ada SD di kecamatan ini --</option>`;
                 state.activeSchoolNpsn = null;
                 renderEmptySchoolState();
                 return;
@@ -1604,15 +1736,15 @@ function upsertRow(sheet, keyCol, obj) {
             schools.forEach(sch => {
                 const opt = document.createElement('option');
                 opt.value = sch.username;
-                opt.textContent = `${sch.name} (${sch.username}) — Kec. ${sch.kecamatan}`;
-                schoolSelect.appendChild(opt);
+                opt.textContent = `${sch.name} (NPSN: ${sch.username}) - Kec. ${sch.kecamatan}`;
+                selectEl.appendChild(opt);
             });
 
-            if (prevSelected && schools.some(s => s.username === prevSelected)) {
-                schoolSelect.value = prevSelected;
-                state.activeSchoolNpsn = prevSelected;
+            if (prevVal && schools.some(s => s.username === prevVal)) {
+                selectEl.value = prevVal;
+                state.activeSchoolNpsn = prevVal;
             } else {
-                schoolSelect.value = schools[0].username;
+                selectEl.value = schools[0].username;
                 state.activeSchoolNpsn = schools[0].username;
             }
 

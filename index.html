@@ -707,7 +707,7 @@
             <!-- ================================================================= -->
             <!-- TAB 5: PENGATURAN & LINK GOOGLE SHEETS (KHUSUS ADMIN)             -->
             <!-- ================================================================= -->
-            <div id="panel-sheets" class="hidden space-y-6">
+            <div id="panel-sheets" class="hidden space-y-6" data-admin-only="true">
                 <div class="bg-white rounded-3xl p-5 sm:p-8 shadow-sm border border-red-200">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
                         <div class="flex items-start gap-3.5">
@@ -1253,34 +1253,34 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
                         });
                     }
 
-                    if (Array.isArray(data.records)) {
-                        data.records.forEach(remoteRec => {
-                            if (!remoteRec.npsn) return;
-                            const npsn = String(remoteRec.npsn).trim();
-                            state.records[npsn] = {
-                                npsn: npsn,
-                                schoolName: String(remoteRec.schoolName || ""),
-                                kecamatan: String(remoteRec.kecamatan || ""),
-                                scoresBind: typeof remoteRec.scoresBind === "object" && remoteRec.scoresBind !== null ? remoteRec.scoresBind : {},
-                                scoresMtk: typeof remoteRec.scoresMtk === "object" && remoteRec.scoresMtk !== null ? remoteRec.scoresMtk : {},
-                                aiAnalysis: remoteRec.aiAnalysis || null,
-                                checklist: Array.isArray(remoteRec.checklist) ? remoteRec.checklist : [],
-                                notes: String(remoteRec.notes || ""),
-                                updatedAt: remoteRec.updatedAt || new Date().toISOString()
-                            };
-                        });
-                    }
+        function isAdminAuthenticated() {
+            return Boolean(
+                state.currentUser &&
+                state.currentUser.role === "admin" &&
+                String(state.currentUser.username).trim() === ADMIN_ACCOUNT.username &&
+                !state.isDemoMode
+            );
+        }
 
-                    persistToLocalCache();
-                    if (badge) {
-                        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Terhubung Sheets`;
-                    }
-                    if (manual) showToast("Data berhasil disinkronkan dari Google Sheets!", "success");
+        function switchMainTab(tabName) {
+            if (tabName === "sheets" && !isAdminAuthenticated()) {
+                showToast("Akses ditolak: Tab Database Sheets hanya untuk Administrator.", "error");
+                return;
+            }
+            state.activeTab = tabName;
+            const panels = ["bind", "mtk", "ai", "rekap", "sheets"];
+            panels.forEach(p => {
+                const panelEl = document.getElementById(`panel-${p}`);
+                const deskBtn = document.getElementById(`navTab-${p}`);
+                const mobBtn = document.getElementById(`mobTab-${p}`);
 
-                    if (state.currentUser) {
-                        refreshSupervisorSchoolList();
-                        if (state.activeNpsn) loadActiveSchoolToUI(state.activeNpsn);
-                        renderRekapTable();
+                if (panelEl) {
+                    if (p === "sheets" && !isAdminAuthenticated()) {
+                        panelEl.classList.add("hidden");
+                    } else if (p === tabName) {
+                        panelEl.classList.remove("hidden");
+                    } else {
+                        panelEl.classList.add("hidden");
                     }
                 }
             } catch (err) {
@@ -1617,15 +1617,17 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
                 mobRekap.classList.remove("hidden");
                 supBar.classList.remove("hidden");
                 document.getElementById("monitorBarTitle").textContent =
-                    user.role === "admin" ? "Panel Pemantauan Administrator Bidang SD" : "Panel Pemantauan Pengawas SD";
+                    isAdminAuthenticated() ? "Panel Pemantauan Administrator Bidang SD" : "Panel Pemantauan Pengawas SD";
 
-                if (user.role === "admin") {
+                if (isAdminAuthenticated()) {
                     tabSheets.classList.remove("hidden");
                     mobSheets.classList.remove("hidden");
                     loadAdminSheetsConfigToUI();
                 } else {
                     tabSheets.classList.add("hidden");
                     mobSheets.classList.add("hidden");
+                    const panelSheets = document.getElementById("panel-sheets");
+                    if (panelSheets) panelSheets.classList.add("hidden");
                 }
 
                 refreshSupervisorSchoolList();
@@ -2286,6 +2288,7 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
 
         // 14. PENGATURAN GOOGLE SHEETS (KHUSUS ADMIN)
         function loadAdminSheetsConfigToUI() {
+            if (!isAdminAuthenticated()) return;
             const viewInput = document.getElementById("adminSheetViewUrlInput");
             const scriptInput = document.getElementById("adminAppsScriptUrlInput");
             const directBtn = document.getElementById("directSheetLinkBtn");
@@ -2296,6 +2299,10 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
         }
 
         function saveGoogleSheetsConfig() {
+            if (!isAdminAuthenticated()) {
+                showToast("Akses ditolak: Hanya Administrator yang dapat mengubah konfigurasi ini.", "error");
+                return;
+            }
             const viewUrl = document.getElementById("adminSheetViewUrlInput").value.trim();
             const scriptUrl = document.getElementById("adminAppsScriptUrlInput").value.trim();
 
@@ -2324,6 +2331,10 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
         }
 
         function exportReadyHtmlForNetlify() {
+            if (!isAdminAuthenticated()) {
+                showToast("Akses ditolak: Hanya Administrator yang dapat mengunduh konfigurasi.", "error");
+                return;
+            }
             const viewUrl = document.getElementById("adminSheetViewUrlInput").value.trim() || state.sheetsConfig.sheetViewUrl;
             const scriptUrl = document.getElementById("adminAppsScriptUrlInput").value.trim() || state.sheetsConfig.appsScriptUrl;
 

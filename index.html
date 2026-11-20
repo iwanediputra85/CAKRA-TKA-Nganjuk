@@ -1253,34 +1253,37 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
                         });
                     }
 
-        function isAdminAuthenticated() {
-            return Boolean(
-                state.currentUser &&
-                state.currentUser.role === "admin" &&
-                String(state.currentUser.username).trim() === ADMIN_ACCOUNT.username &&
-                !state.isDemoMode
-            );
-        }
+                    if (Array.isArray(data.records)) {
+                        data.records.forEach(remoteRec => {
+                            if (!remoteRec.npsn) return;
+                            const npsn = String(remoteRec.npsn).trim();
+                            state.records[npsn] = {
+                                npsn: npsn,
+                                schoolName: String(remoteRec.schoolName || ""),
+                                kecamatan: String(remoteRec.kecamatan || ""),
+                                scoresBind: typeof remoteRec.scoresBind === "object" && remoteRec.scoresBind !== null ? remoteRec.scoresBind : {},
+                                scoresMtk: typeof remoteRec.scoresMtk === "object" && remoteRec.scoresMtk !== null ? remoteRec.scoresMtk : {},
+                                aiAnalysis: remoteRec.aiAnalysis || null,
+                                checklist: Array.isArray(remoteRec.checklist) ? remoteRec.checklist : [],
+                                notes: String(remoteRec.notes || ""),
+                                updatedAt: remoteRec.updatedAt || new Date().toISOString()
+                            };
+                        });
+                    }
 
-        function switchMainTab(tabName) {
-            if (tabName === "sheets" && !isAdminAuthenticated()) {
-                showToast("Akses ditolak: Tab Database Sheets hanya untuk Administrator.", "error");
-                return;
-            }
-            state.activeTab = tabName;
-            const panels = ["bind", "mtk", "ai", "rekap", "sheets"];
-            panels.forEach(p => {
-                const panelEl = document.getElementById(`panel-${p}`);
-                const deskBtn = document.getElementById(`navTab-${p}`);
-                const mobBtn = document.getElementById(`mobTab-${p}`);
+                    persistToLocalCache();
+                    if (badge) {
+                        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Tersinkron Google Sheets`;
+                    }
+                    if (manual) showToast("Data berhasil disinkronkan dari Google Sheets!", "success");
 
-                if (panelEl) {
-                    if (p === "sheets" && !isAdminAuthenticated()) {
-                        panelEl.classList.add("hidden");
-                    } else if (p === tabName) {
-                        panelEl.classList.remove("hidden");
-                    } else {
-                        panelEl.classList.add("hidden");
+                    if (state.currentUser) {
+                        if (state.currentUser.role !== "lembaga") {
+                            refreshSupervisorSchoolList();
+                            renderRekapTable();
+                        } else if (state.activeNpsn) {
+                            loadActiveSchoolToUI(state.activeNpsn);
+                        }
                     }
                 }
             } catch (err) {
@@ -1290,6 +1293,15 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
                 }
                 if (manual) showToast("Gagal terhubung ke Google Sheets. Periksa URL Web App & izin 'Anyone'.", "error");
             }
+        }
+
+        function isAdminAuthenticated() {
+            return Boolean(
+                state.currentUser &&
+                state.currentUser.role === "admin" &&
+                String(state.currentUser.username).trim() === ADMIN_ACCOUNT.username &&
+                !state.isDemoMode
+            );
         }
 
         async function pushToGoogleSheets(action, payloadObj) {
@@ -1639,6 +1651,10 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
         }
 
         function switchMainTab(tabName) {
+            if (tabName === "sheets" && !isAdminAuthenticated()) {
+                showToast("Akses ditolak: Tab Database Sheets hanya untuk Administrator.", "error");
+                return;
+            }
             state.activeTab = tabName;
             const panels = ["bind", "mtk", "ai", "rekap", "sheets"];
             panels.forEach(p => {
@@ -1647,8 +1663,13 @@ function upsertRow(sheet, keyCol, obj, rawKey) {
                 const mobBtn = document.getElementById(`mobTab-${p}`);
 
                 if (panelEl) {
-                    if (p === tabName) panelEl.classList.remove("hidden");
-                    else panelEl.classList.add("hidden");
+                    if (p === "sheets" && !isAdminAuthenticated()) {
+                        panelEl.classList.add("hidden");
+                    } else if (p === tabName) {
+                        panelEl.classList.remove("hidden");
+                    } else {
+                        panelEl.classList.add("hidden");
+                    }
                 }
 
                 if (deskBtn) {
